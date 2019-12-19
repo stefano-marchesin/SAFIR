@@ -34,6 +34,9 @@ To run BM25 or QLM, run ``lexical_search.py``.
 The code for the model combination task is within ``re_ranking`` and ``rank_fusion`` directories.  
 The folder structure required to run experiments can be seen in folder ``example``. Python files need to be put in root.  
 Qrels file needs to be in ``.txt`` format.  
+Collections need to be named as: ``OHSUMED``, ``TREC_CDS14_15``, and ``TREC_CDS16``.  
+To evaluate models ``trec_eval`` and ``sample_eval`` from NIST are required.  
+
 
 ### Additional Notes
 ``server.py`` needs to be substituted within QuickUMLS folder as it contains a modified version required to run knowledge-enhanced models.  
