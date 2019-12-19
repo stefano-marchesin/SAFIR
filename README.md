@@ -24,6 +24,8 @@ Submitted to ACM Transactions on Information Systems by M. Agosti, S. Marchesin,
   - Elasticsearch_dsl
   - Pubmed_parser
 - UMLS 2018AA
+- Trec_eval
+- Sample_eval
 
 ### Notes 
 To train/evaluate SAFIR run ``safir_train.py``.  
