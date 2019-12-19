@@ -36,4 +36,4 @@ The folder structure required to run experiments can be seen in folder ``example
 Qrels file needs to be in ``.txt`` format.  
 
 ### Additional Notes
-``server.py`` needs to be substitued within QuickUMLS folder as it contains a modified version required to run knowledge-enhanced models.  
+``server.py`` needs to be substituted within QuickUMLS folder as it contains a modified version required to run knowledge-enhanced models.  
