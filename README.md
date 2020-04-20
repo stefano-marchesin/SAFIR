@@ -6,7 +6,7 @@ This repository contains code, plots, and runs for the paper:
  </p>
 Submitted to ACM Transactions on Information Systems by M. Agosti, S. Marchesin, and G. Silvello
 
-<b>NOTE: New data and code fixing will be available asap</b>
+<b>NOTE: New data and fixes will be available asap</b>
 
 ### Requirements
 
