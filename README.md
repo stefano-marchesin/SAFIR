@@ -1,10 +1,12 @@
-# Learning Methods for Knowledge-Enhanced Word Embeddings
+# Learning Unsupervised Knowledge-Enhanced Representations to Reduce the Semantic Gap in Information Retrieval
 
 This repository contains code, plots, and runs for the paper: 
 <p align="center">
 <b><i>Learning Unsupervised Knowledge-Enhanced Representations to Reduce the Semantic Gap in Information Retrieval</i></b>
  </p>
 Submitted to ACM Transactions on Information Systems by M. Agosti, S. Marchesin, and G. Silvello 
+
+<b>New data and code fixing will be available asap</b>
 
 ### Requirements
 
