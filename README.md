@@ -1,6 +1,6 @@
 # Learning Unsupervised Knowledge-Enhanced Representations to Reduce the Semantic Gap in Information Retrieval
 
-<b>NOTE: The new data and source fixes will be available asap</b>
+<b>NOTE: The new data and corrected source code will be available soon</b>
 
 This repository contains code, plots, and runs for the paper: 
 <p align="center">
