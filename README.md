@@ -42,6 +42,7 @@ To evaluate models ``trec_eval`` and ``sample_eval`` from NIST are required.
 ### Additional Notes
 ``server.py`` needs to be substituted within QuickUMLS folder as it contains a modified version required to run knowledge-enhanced models.  
 All the runs, pools, plots and analyses to reproduce the results presented in the paper are publicly available at: https://zenodo.org/record/3908196#.X3Tu8mgzZPY.
+
 If you use the code or the data related to this paper, please cite the publication reported below.
 
 ## Reference
