@@ -15,7 +15,6 @@ published in ACM Transactions on Information Systems by M. Agosti, S. Marchesin,
   - TensorFlow >= 1.13
   - Whoosh
   - SQLite3
-  - Cvangysel
   - Pytrec_Eval
   - Scikit-Learn
   - Tqdm
