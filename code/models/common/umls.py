@@ -195,15 +195,14 @@ class UMLSLookup(object):
         self.sqlite.execute(query)
         return True
 
-    def compute_num_edges(self, objs, subj, table):
+    def compute_num_edges(self, subj, objs, table):
         """compute the number of edges (i.e. connections) between subject concept and list of object concepts"""
         if not UMLSLookup.did_check_dbs:  # lazy UMLS db checking
             UMLS.check_database()
             UMLSLookup.did_check_dbs = True
         # define query to compute number of concept's connections within document
-        params = tuple(objs + [subj])
-        # CAVEAT: CUI1: object, CUI2: subject - UMLS relations are from right to left (i.e. relations that CUI2 has to CUI1)
-        query = "SELECT COUNT(CUI1) FROM " + table + " WHERE CUI1 IN (%s) AND CUI2 = ?;" % ','.join('?' * len(objs))
+        params = tuple([subj] + objs)
+        query = "SELECT COUNT(CUI2) FROM " + table + " WHERE CUI1 = ? AND CUI2 IN (%s);" % ','.join('?' * len(objs))
         # initialize number of edges to 0
         num_edges = 0
         # execute query

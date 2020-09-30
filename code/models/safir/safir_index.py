@@ -282,7 +282,7 @@ class Index(object):
 							obj_cuis = list(set(doc_cuis.keys()).difference({subj_cui}))
 						else:  # subj_cui is associated with other terms in the doc too
 							obj_cuis = list(doc_cuis.keys())
-						num_edges += self.umls.compute_num_edges(obj_cuis, subj_cui, table_name)  # remember that subj and obj are inverted within UMLS <s, p, o> triples
+						num_edges += self.umls.compute_num_edges(subj_cui, obj_cuis, table_name)
 						# verify connectivity
 						if num_edges > max_edges:
 							# set candidates to subj_cui
@@ -313,9 +313,9 @@ class Index(object):
 		print("create table to store UMLS relations between concepts associated to (indexed) tokens - fast access is enabled by indexes")
 		self.umls.restrict_to_ix_concepts(ix_concepts, corpus_name)
 		# create indexes to speed up requests
-		self.umls.create_index("CUI2_" + corpus_name, ["CUI2"], corpus_name)  # create index for subject column
-		self.umls.create_index("CUI1_" + corpus_name, ["CUI1"], corpus_name)  # create index for object column
-		self.umls.create_index("CUI2_CUI1_" + corpus_name, ["CUI2", "CUI1"], corpus_name)  # create multicolumn index (subj, obj)
+		self.umls.create_index("CUI1_" + corpus_name, ["CUI1"], corpus_name)  # create index for subject column
+		self.umls.create_index("CUI2_" + corpus_name, ["CUI2"], corpus_name)  # create index for object column
+		self.umls.create_index("CUI1_CUI2_" + corpus_name, ["CUI1", "CUI2"], corpus_name)  # create multicolumn index (subj, obj)
 		# encode corpus
 		print("disambiguate polysemous tokens and encode corpus")
 		enc_corpus = [self.s_wsd(doc, corpus_name, query=False) for doc in tqdm(pproc_corpus)]

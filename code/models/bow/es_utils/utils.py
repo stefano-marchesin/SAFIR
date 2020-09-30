@@ -67,14 +67,14 @@ def get_averaged_measure_score(run, qrels, measure):
     """return averaged measure score over topics"""
     if "P_" in measure:
         cmd = "./trec_eval/trec_eval -m " + measure.split('_')[0] + " " + qrels + " " + run
+    elif "recall_" in measure:
+        cmd = "./trec_eval/trec_eval -m " + measure.split('_')[0] + " " + qrels + " " + run
     elif "ndcg_cut" in measure:
         cmd = "./trec_eval/trec_eval -m " + measure.split('_')[0] + '_' + measure.split('_')[1] + " " + qrels + " " + run
     else:
         cmd = "./trec_eval/trec_eval -m " + measure + " " + qrels + " " + run
     process = subprocess.run(cmd.split(), stdout=subprocess.PIPE)
     result = process.stdout.decode('utf-8').split('\n')
-    if 'recall.' in measure:
-        measure = '_'.join(measure.split('.'))
     qscore = np.array([score.split('\t')[-1] for score in result if score.split('\t')[0].strip() == measure])
     qscore = qscore.astype(np.float)[0]
     return qscore

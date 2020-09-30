@@ -3,11 +3,13 @@ import os
 import math
 import string
 import json
+import operator
 import itertools
 import numpy as np
 import xml.etree.ElementTree as ETree
 
 from tqdm import tqdm
+from collections import defaultdict, Counter
 from elasticsearch import helpers
 from elasticsearch_dsl import Search, Q
 from pubmed_parser.pubmed_oa_parser import list_xml_path, parse_pubmed_xml
@@ -168,3 +170,137 @@ class Index(object):
 				out.write('%s %s %s %d %f %s\n' % (qid, 'Q0', rank['_id'], idx, rank['_score'], run_name))
 		out.close()
 		return True
+
+	### RM3 PSEUDO-RELEVANCE FEEDBACK RELATED FUNCTIONS ###
+
+	def perform_rm3_prf(self, queries, qfield, rank_path, run_name, fb_docs=10, fb_terms=10, qweight=0.5):
+		"""perform pseudo-relevance feedback w/ RM3 model"""
+		
+		out = open(rank_path + '/' + run_name + '.txt', 'w')
+		# loop over queries and perform RM3 expansion
+		for qid, qbody in tqdm(queries.items()):
+			# issue first quey retrieving 'fb_docs' feedback docs
+			first_qres = self.es.search(index=self.index, size=fb_docs, body={'query': {'match': {self.field: qbody[qfield]}}})
+			
+			# store ids and scores of the returned feedback docs
+			ids_and_scores = dict()
+			for res in first_qres['hits']['hits']:
+				ids_and_scores[res['_id']] = res['_score']
+			
+			# get query feature vector and normalize to L1 norm
+			qfv = self.scale_to_L1_norm(Counter(self.analyze_query(qbody[qfield])))
+			# get relevance model feature vector (i.e., RM1)
+			rm1 = self.estimate_relevance_model(ids_and_scores, fb_terms)
+			# interpolate qfv and rm1 (i.e., RM3)
+			rm3 = self.interpolate(qfv, rm1, qweight)
+			
+			# build boosted term queries
+			term_queries = [{'term': {self.field: {'value': term, 'boost': score}}} for term, score in rm3.items()]
+			# combine term queries w/ SHOULD operator
+			expanded_query = {'query': { 'bool': {'should': term_queries}}}
+			# issue expanded query and return 1000 docs constituting final ranking list
+			prf_qres = self.es.search(index=self.index, size=1000, body=expanded_query)
+			for idx, rank in enumerate(prf_qres['hits']['hits']):
+				out.write('%s %s %s %d %f %s\n' % (qid, 'Q0', rank['_id'], idx, rank['_score'], run_name))
+		out.close()
+		return True
+
+	def interpolate(self, qfv, rm1, qweight):
+		"""interpolate two feature vectors w/ given weight"""
+		
+		# set variables
+		rm3 = defaultdict(float)
+		vocab = set()
+		
+		# update vocab w/ terms from both feature vectors
+		vocab.update(qfv.keys())
+		vocab.update(rm1.keys())
+		
+		# interpolate
+		for term in vocab:
+			weight = qweight * qfv[term] + (1 - qweight) * rm1[term]
+			rm3[term] = weight
+		return rm3
+
+	def estimate_relevance_model(self, ids_and_scores, fb_terms):
+		"""estimate RM1"""
+		
+		# set variables
+		rm1_vec = list()
+		vocab = set()
+		doc_vecs = dict()
+	   
+		# create document feature vectors for each feedback doc
+		for doc in self.es.mtermvectors(index=self.index, 
+										doc_type=self.doc, 
+										body=dict(ids=list(ids_and_scores.keys()), 
+												  parameters=dict(term_statistics=True, 
+																  field_statistics=False, 
+																  positions=False, 
+																  payloads=False, 
+																  offsets=False, 
+																  fields=[self.field])))['docs']:
+			# extract term stats from current feedback doc
+			fields = doc['term_vectors']
+			term_stats = fields[self.field]['terms']
+			
+			# create document feature vector
+			dfv = self.create_feature_vector(term_stats)
+			# keep top 'fb_terms' from dfv
+			dfv = defaultdict(int, sorted(dfv, key=lambda x: (-x[1], x[0]))[:fb_terms])  # -x[1] represents descending order
+
+			# update vocab with top 'fb_terms' terms contained within feedback docs and store document feature vectors
+			vocab.update(dfv.keys())
+			doc_vecs[doc['_id']] = dfv
+
+		# compute L1 norm for each document feature vector
+		norms = {doc_id: sum(dfv.values()) for doc_id, dfv in doc_vecs.items()}
+
+		# loop over terms in vocab and compute RM1
+		for term in vocab:
+			fb_weight = 0.0
+			# loop over document feature vectors 
+			for doc_id in doc_vecs.keys():
+				if norms[doc_id] > 0.001:  # avoids zero-length feedback docs which cause division by zero when computing term weights
+					# sum the score of current term across different docs to fb_weight
+					fb_weight += (doc_vecs[doc_id][term] / norms[doc_id]) * ids_and_scores[doc_id]  # ids_and_scores[doc_id] is the score obtained for current doc w/ the original query
+			# assign term w/ weight to RM1 feature vector
+			rm1_vec.append((term, fb_weight))
+
+		# keep top 'fb_terms' from rm1_vec
+		rm1_vec = defaultdict(float, sorted(rm1_vec, key=lambda x: (-x[1], x[0]))[:fb_terms])  # -x[1] represents descending order
+		# scale rm1_vec to L1 norm
+		return self.scale_to_L1_norm(rm1_vec)
+
+	def create_feature_vector(self, term_stats):
+		"""create the feature vector out of doc terms"""
+		
+		tfv = list()
+		# get corpus length (n. of docs)
+		num_docs = self.es.count(index=self.index)['count']
+		for term, stats in term_stats.items():
+			# filter out terms w/ length lt 2 or length gt 20
+			if len(term) < 2 or len(term) > 20:
+				continue
+			# filter out non-alphabetical terms
+			if not term.isalpha():
+				continue
+			# get document frequency 
+			df = stats['doc_freq']
+			# compute ratio between df and num_docs
+			ratio = df / num_docs
+			if ratio > 0.1:  # skip term - requires tuning: check if it's okay to keep it as is
+				continue
+			# get term frequency within current doc
+			freq = stats['term_freq']
+			# append term w/ term_freq to tfv
+			tfv.append((term, freq))
+		return tfv
+
+	def scale_to_L1_norm(self, vec): 
+		"""scale input vector using L1 norm"""
+		
+		norm = sum(vec.values())
+		for term, score in vec.items():
+			vec[term] = score / norm
+		return vec
