@@ -45,4 +45,4 @@ All the runs, pools, plots and analyses to reproduce the results presented in th
 If you use the code or the data related to this paper, please cite the publication reported below.
 
 ## Reference
-Maristella Agosti, Stefano Marchesin, and Gianmaria Silvello. 2020. Learning Unsupervised Knowledge-Enhanced Representations to Reduce the Semantic Gap in Information Retrieval. Transactions on Information Systems (TOIS), 38(4):1-48.
+Maristella Agosti, Stefano Marchesin, and Gianmaria Silvello. 2020. Learning Unsupervised Knowledge-Enhanced Representations to Reduce the Semantic Gap in Information Retrieval. ACM Transactions on Information Systems (TOIS), 38(4):1-48.
