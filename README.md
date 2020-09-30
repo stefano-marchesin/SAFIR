@@ -4,7 +4,7 @@ This repository contains the code for the paper:
 <p align="center">
 <b><i>Learning Unsupervised Knowledge-Enhanced Representations to Reduce the Semantic Gap in Information Retrieval</i></b>
  </p>
-in ACM Transactions on Information Systems by M. Agosti, S. Marchesin, and G. Silvello
+published in ACM Transactions on Information Systems by M. Agosti, S. Marchesin, and G. Silvello
 
 ### Requirements
 
